@@ -1,0 +1,32 @@
+services:
+  #
+  # Example of reverse proxy (i.e. nginx) configured with the webserver > default.template file
+  #
+  webserver:
+    image: nginx
+    volumes:
+      - ./webserver/default.template:/etc/nginx/templates/default.template
+    environment:
+      SITE_NAME: ${SITE_NAME}
+      SERVER_NAME: ${SERVER_NAME}
+    entrypoint: /bin/sh -c "envsubst '\$${SITE_NAME} \$${SERVER_NAME}' < /etc/nginx/templates/default.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+    depends_on:
+      - plone
+    ports:
+    - "127.0.0.1:80:80"
+    restart: always
+    security_opt:
+      - no-new-privileges
+  plone:
+    build:
+      context: ./plone
+      dockerfile: ./Dockerfile
+    environment:
+      SITE: ${SITE_NAME}
+      TYPE: classic
+      FLAG: ${FLAG}
+    volumes:
+      - ./plone/nginxploneserver_data:/data
+    restart: always
+    security_opt:
+      - no-new-privileges
